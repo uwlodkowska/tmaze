@@ -19,6 +19,7 @@ const int motorsNoPerDirection = 4;
 const int motorsPerShield = 2;
 const int feedersQ = 2;
 const int openTime = 4000;
+const int feederOpenTime = 1000;
 
 int doorIdx;
 
@@ -45,6 +46,9 @@ void setup() {
   upMotors[motorsPerShield] = shields[shieldsNumber-1].getMotor(2);
   downMotors[motorsPerShield] = shields[shieldsNumber-1].getMotor(1);
 
+  feeders[0] = shields[shieldsNumber-1].getMotor(3);
+  feeders[1] = shields[shieldsNumber-1].getMotor(4);
+
   for (int shieldIdx = 0; shieldIdx < shieldsNumber; shieldIdx++)  {
     shields[shieldIdx].begin();
   }
@@ -53,22 +57,37 @@ void setup() {
     upMotors[motorIdx]->setSpeed(255);
     downMotors[motorIdx]->setSpeed(255);
   }
+  for (int idx = 0; idx < feedersQ; idx++) {
+    feeders[idx]->setSpeed(255);
+  }
 }
 
 void loop() {
 
   if (Serial.available()) {
     doorIdx = Serial.parseInt();
-    if (doorIdx < 0) {
-      doorIdx = -doorIdx-1;
-      downMotors[doorIdx]->run(FORWARD);
-      delay(openTime);  
-      downMotors[doorIdx]->run(RELEASE);     
+    int absVal = abs(doorIdx);
+    if (absVal == 10) {
+      if (doorIdx < 0) {
+        feeders[0]->run(FORWARD);
+        delay(feederOpenTime);
+        feeders[0]->run(RELEASE);
+      } else {
+        feeders[1]->run(FORWARD);
+        delay(feederOpenTime);
+        feeders[1]->run(RELEASE);
+      }
     } else {
-      doorIdx--;
-      upMotors[doorIdx]->run(FORWARD);
-      delay(openTime);  
-      upMotors[doorIdx]->run(RELEASE);  
+      absVal--;
+      if (doorIdx < 0) {
+        downMotors[absVal]->run(FORWARD);
+        delay(openTime);  
+        downMotors[absVal]->run(RELEASE);     
+      } else {
+        upMotors[absVal]->run(FORWARD);
+        delay(openTime);  
+        upMotors[absVal]->run(RELEASE);  
+      }
     }
   }
   
