@@ -64,9 +64,9 @@ void setup() {
 }
 
 void loop() {
-
-  if (Serial.available()) {
-    doorIdx = Serial.parseInt();
+  if (Serial.available() > 0) {
+    String strIdx = Serial.readStringUntil('\n');
+    doorIdx = strIdx.toInt();
     if (doorIdx < 0) {
       doorIdx = -doorIdx-1;
       downMotors[doorIdx]->run(FORWARD);

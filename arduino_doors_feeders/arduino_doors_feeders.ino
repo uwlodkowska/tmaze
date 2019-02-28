@@ -64,8 +64,9 @@ void setup() {
 
 void loop() {
 
-  if (Serial.available()) {
-    doorIdx = Serial.parseInt();
+  if (Serial.available() >0) {
+    String strIdx = Serial.readStringUntil('\n');
+    doorIdx = strIdx.toInt();
     int absVal = abs(doorIdx);
     if (absVal == 10) {
       if (doorIdx < 0) {
