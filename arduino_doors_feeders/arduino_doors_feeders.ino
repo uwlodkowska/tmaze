@@ -19,15 +19,35 @@ const int motorsNoPerDirection = 4;
 const int motorsPerShield = 2;
 const int feedersQ = 2;
 const int openTime = 4000;
-const int feederOpenTime = 1000;
+const int feederOpenTime = 350;
 
 int doorIdx;
+int feederIdx;
+int doorCount;
+int doorsToMove[motorsNoPerDirection];
 
 Adafruit_MotorShield shields[shieldsNumber];
 
 Adafruit_DCMotor *upMotors[motorsNoPerDirection];
 Adafruit_DCMotor *downMotors[motorsNoPerDirection];
 Adafruit_DCMotor *feeders[feedersQ];
+
+String getValue(String data, char separator, int index)
+{
+  int found = 0;
+  int strIndex[] = {0, -1};
+  int maxIndex = data.length()-1;
+
+  for(int i=0; i<=maxIndex && found<=index; i++){
+    if(data.charAt(i)==separator || i==maxIndex){
+        found++;
+        strIndex[0] = strIndex[1]+1;
+        strIndex[1] = (i == maxIndex) ? i+1 : i;
+    }
+  }
+
+  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
 
 void setup() {
   Serial.begin(9600);           // set up Serial library at 9600 bps
@@ -66,30 +86,66 @@ void loop() {
 
   if (Serial.available() >0) {
     String strIdx = Serial.readStringUntil('\n');
-    doorIdx = strIdx.toInt();
-    int absVal = abs(doorIdx);
-    if (absVal == 10) {
-      if (doorIdx < 0) {
-        feeders[0]->run(FORWARD);
-        delay(feederOpenTime);
-        feeders[0]->run(RELEASE);
+    
+
+    doorCount = 0;
+    String token = getValue(strIdx,',',doorCount);
+    while (token != "") 
+    { 
+      doorsToMove[doorCount] = token.toInt();
+      doorCount++;
+      token = getValue(strIdx,',',doorCount);
+    }
+
+    for (int doorTabIdx = 0; doorTabIdx < doorCount; doorTabIdx++){
+      doorIdx = doorsToMove[doorTabIdx];
+
+      int absVal = abs(doorIdx);
+      if (absVal < 10) {
+        if (doorIdx < 0) {
+          doorIdx = -doorIdx-1;
+          downMotors[doorIdx]->run(FORWARD);   
+        } else {
+          doorIdx--;
+          upMotors[doorIdx]->run(FORWARD);
+        }
       } else {
-        feeders[1]->run(FORWARD);
-        delay(feederOpenTime);
-        feeders[1]->run(RELEASE);
-      }
-    } else {
-      absVal--;
-      if (doorIdx < 0) {
-        downMotors[absVal]->run(FORWARD);
-        delay(openTime);  
-        downMotors[absVal]->run(RELEASE);     
-      } else {
-        upMotors[absVal]->run(FORWARD);
-        delay(openTime);  
-        upMotors[absVal]->run(RELEASE);  
+
+        if (doorIdx < 0) {
+          feederIdx = 0;
+        } else {
+          feederIdx = 1;
+        }
+        if (absVal <=20){
+          feeders[feederIdx]->run(FORWARD);
+        }
+        if(absVal == 10){
+          delay(feederOpenTime);
+        }
+        if(absVal !=20) {
+          feeders[feederIdx]->run(RELEASE);
+        }
+
       }
     }
+
+    delay(openTime); 
+     
+    for (int doorTabIdx = 0; doorTabIdx < doorCount; doorTabIdx++){
+      doorIdx = doorsToMove[doorTabIdx];
+      int absVal = abs(doorIdx);
+      if (absVal < 10) {
+        if (doorIdx < 0) {
+          doorIdx = -doorIdx-1;
+          downMotors[doorIdx]->run(RELEASE);     
+        } else {
+          doorIdx--;
+          upMotors[doorIdx]->run(RELEASE);  
+        }
+      }
+    }
+  
+    
   }
   
 //  up1->run(FORWARD);
