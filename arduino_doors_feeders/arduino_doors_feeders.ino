@@ -19,7 +19,7 @@ const int motorsNoPerDirection = 4;
 const int motorsPerShield = 2;
 const int feedersQ = 2;
 const int openTime = 4000;
-const int feederOpenTime = 350;
+const int feederOpenTime = 300;
 
 int doorIdx;
 int feederIdx;
